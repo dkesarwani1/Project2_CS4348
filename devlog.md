@@ -1,0 +1,14 @@
+## April 17th 1:10PM
+Bank Simulation with Threads and Semaphores
+Project Goal
+The goal of this project is to simulate a bank with:
+3 teller threads
+50 customer threads
+a door that allows only 2 customers through at a time
+a manager that only 1 teller can use at a time
+a safe that only 2 tellers can use at a time
+
+Each customer can choose either a Deposit or Withdrawal.
+If the customer wants a withdrawal, the teller must first go to the manager for approval.
+After that, the teller goes to the safe to complete the transaction.
+All actions must be synchronized correctly and printed in the required format.
