@@ -26,3 +26,16 @@ sets up the thread function prototypes
 starts teller and customer threads in main
 
 At this stage, the program structure exists, but the interaction logic is still in its beginning stage.
+
+## April 17th 2:40AM
+Step 2 — Add bank opening, customer arrival, and doorway control
+This step adds the first important synchronization rules:
+
+customers randomly choose deposit or withdrawal
+customers wait 0–100 ms before arriving
+customers cannot enter before the bank opens
+the bank opens only after all 3 tellers are ready
+only 2 customers may use the door at once
+customers get in line after entering
+
+This so far does what the project’s required order of actions for customers and tellers.
