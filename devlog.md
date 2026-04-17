@@ -12,3 +12,17 @@ Each customer can choose either a Deposit or Withdrawal.
 If the customer wants a withdrawal, the teller must first go to the manager for approval.
 After that, the teller goes to the safe to complete the transaction.
 All actions must be synchronized correctly and printed in the required format.
+
+## Aprill 17th 1:50 
+Step 1 — Build the program structure and shared resources
+Build the basic simulation structure
+This first step sets up the overall bank simulation:
+
+includes the needed libraries
+defines the number of tellers and customers which are 3 and 50
+creates the shared synchronization objects
+creates helper logging functions
+sets up the thread function prototypes
+starts teller and customer threads in main
+
+At this stage, the program structure exists, but the interaction logic is still in its beginning stage.
