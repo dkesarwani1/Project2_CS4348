@@ -13,14 +13,14 @@
 
 using namespace std;
 
-constexpr int numtellers = 3;
-constexpr int numcustomers = 50;
+constexpr int NUM_TELLERS = 3;
+constexpr int NUM_CUSTOMERS = 50;
 
-// Shared semaphores
+// Doorway capacity: only two customers may pass through the door at once.
 counting_semaphore<2> doorSem(2);
 counting_semaphore<1> managerSem(1);
 counting_semaphore<2> safeSem(2);
-counting_semaphore<numcustomers> customerReady(0);
+counting_semaphore<NUM_CUSTOMERS> customerReady(0);
 
 mutex bankMutex;
 condition_variable bankCV;
@@ -35,52 +35,63 @@ int servedCustomers = 0;
 atomic<bool> bankClosed(false);
 queue<int> customerQueue;
 
-binary_semaphore* customerAssigned[numcustomers];
-binary_semaphore* customerDone[numcustomers];
+binary_semaphore* customerAssigned[NUM_CUSTOMERS];
+binary_semaphore* customerDone[NUM_CUSTOMERS];
 
-binary_semaphore* tellerAskSem[numtellers];
-binary_semaphore* customerTellSem[numtellers];
-binary_semaphore* customerLeftSem[numtellers];
+binary_semaphore* tellerAskSem[NUM_TELLERS];
+binary_semaphore* customerTellSem[NUM_TELLERS];
+binary_semaphore* customerLeftSem[NUM_TELLERS];
 
-int assignedTeller[numcustomers];
-string transactionType[numcustomers];
+int assignedTeller[NUM_CUSTOMERS];
+string transactionType[NUM_CUSTOMERS];
 
-void logline(const string& actorType, int actorId, const string& targetType, int targetId, const string& message)
+void logLine(const string& actorType, int actorId,
+             const string& targetType, int targetId,
+             const string& message)
 {
     lock_guard<mutex> lk(coutMutex);
     cout << actorType << ' ' << actorId << " [" << targetType << ' ' << targetId << "]: "
          << message << '\n';
 }
 
-void logresource(const string& actorType, int actorId,const string& resource, const string& message)
+void logResource(const string& actorType, int actorId,
+                 const string& resource,
+                 const string& message)
 {
     lock_guard<mutex> lk(coutMutex);
     cout << actorType << ' ' << actorId << " [" << resource << "]: "
          << message << '\n';
 }
 
+void passThroughDoor(int customerId, const string& actionMessage)
+{
+    logLine("Customer", customerId, "Customer", customerId, "waiting to use door");
+    doorSem.acquire();
+    logLine("Customer", customerId, "Customer", customerId, actionMessage);
+    this_thread::sleep_for(chrono::milliseconds(1));
+    doorSem.release();
+}
+
 void customer(int id)
 {
-    logline("Customer", id, "Customer", id, "created");
+    logLine("Customer", id, "Customer", id, "created");
 }
 
 void teller(int id)
 {
-    logline("Teller", id, "Teller", id, "ready to serve");
+    logLine("Teller", id, "Teller", id, "ready to serve");
 }
 
 int main()
 {
     srand(static_cast<unsigned>(time(nullptr)));
 
-    for (int i = 0; i < numcustomers; ++i) 
-    {
+    for (int i = 0; i < NUM_CUSTOMERS; ++i) {
         customerAssigned[i] = new binary_semaphore(0);
         customerDone[i] = new binary_semaphore(0);
     }
 
-    for (int i = 0; i < numtellers; ++i) 
-    {
+    for (int i = 0; i < NUM_TELLERS; ++i) {
         tellerAskSem[i] = new binary_semaphore(0);
         customerTellSem[i] = new binary_semaphore(0);
         customerLeftSem[i] = new binary_semaphore(0);
@@ -89,31 +100,25 @@ int main()
     vector<thread> tellers;
     vector<thread> customers;
 
-    for (int i = 1; i <= numtellers; ++i) 
-    {
+    for (int i = 1; i <= NUM_TELLERS; ++i) {
         tellers.emplace_back(teller, i);
     }
-    for (int i = 0; i < numcustomers; ++i) 
-    {
+    for (int i = 0; i < NUM_CUSTOMERS; ++i) {
         customers.emplace_back(customer, i);
     }
 
-    for (auto& c : customers) 
-    {
+    for (auto& c : customers) {
         c.join();
     }
-    for (auto& t : tellers) 
-    {
+    for (auto& t : tellers) {
         t.join();
     }
 
-    for (int i = 0; i < numcustomers; ++i) 
-    {
+    for (int i = 0; i < NUM_CUSTOMERS; ++i) {
         delete customerAssigned[i];
         delete customerDone[i];
     }
-    for (int i = 0; i < numtellers; ++i) 
-    {
+    for (int i = 0; i < NUM_TELLERS; ++i) {
         delete tellerAskSem[i];
         delete customerTellSem[i];
         delete customerLeftSem[i];
